@@ -1,4 +1,3 @@
-import { Deployer, ContractClass, ContractInstance, getTruffleConfig } from './truffle';
 import { ValidationOptions, withValidationDefaults } from '@openzeppelin/upgrades-core';
 
 export type Options = DeployOptions & ValidationOptions;
@@ -27,11 +26,14 @@ export function withDefaults(opts: Options): Required<Options> {
   };
 }
 
+import { ContractFactory, ContractInstance, Deployer } from './template';
+import { getTruffleConfig } from './truffle';
+
 const defaultDeployer: Deployer = {
   get provider() {
     return getTruffleConfig().provider;
   },
-  async deploy(Contract: ContractClass, ...args: unknown[]): Promise<ContractInstance> {
-    return Contract.new(...args);
+  async deploy(factory: ContractFactory, ...args: unknown[]): Promise<ContractInstance> {
+    return factory.new(...args);
   },
 };

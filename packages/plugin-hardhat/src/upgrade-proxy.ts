@@ -1,20 +1,27 @@
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import type { ContractFactory, Contract } from 'ethers';
-
 import { Manifest, getAdminAddress } from '@openzeppelin/upgrades-core';
 
 import {
+  ContractFactory,
+  ContractInstance,
+  UpgradeProxyFunction,
+  Options,
+  withDefaults,
+} from './types/index';
+
+import {
+  attach,
   deployImpl,
   getTransparentUpgradeableProxyFactory,
   getProxyAdminFactory,
-  Options,
-  withDefaults,
 } from './utils';
 
-export type UpgradeFunction = (proxyAddress: string, ImplFactory: ContractFactory, opts?: Options) => Promise<Contract>;
-
-export function makeUpgradeProxy(hre: HardhatRuntimeEnvironment): UpgradeFunction {
-  return async function upgradeProxy(proxyAddress, ImplFactory, opts: Options = {}) {
+export function makeUpgradeProxy(hre: HardhatRuntimeEnvironment): UpgradeProxyFunction {
+  return async function upgradeProxy(
+    proxyAddress: string,
+    factory: ContractFactory,
+    opts: Options = {},
+  ): Promise<ContractInstance> {
     const requiredOpts: Required<Options> = withDefaults(opts);
 
     const { provider } = hre.network;
@@ -29,26 +36,26 @@ export function makeUpgradeProxy(hre: HardhatRuntimeEnvironment): UpgradeFunctio
     switch (requiredOpts.kind) {
       case 'uups': {
         // Use TransparentUpgradeableProxyFactory to get proxiable interface
-        const TransparentUpgradeableProxyFactory = await getTransparentUpgradeableProxyFactory(hre, ImplFactory.signer);
-        const proxy = TransparentUpgradeableProxyFactory.attach(proxyAddress);
-        const nextImpl = await deployImpl(hre, ImplFactory, requiredOpts, { proxyAddress, manifest });
+        const TransparentUpgradeableProxyFactory = await getTransparentUpgradeableProxyFactory(hre, factory.signer);
+        const proxy = attach(TransparentUpgradeableProxyFactory, proxyAddress);
+        const nextImpl = await deployImpl(hre, factory, requiredOpts, { proxyAddress, manifest });
         await proxy.upgradeTo(nextImpl);
         break;
       }
 
       case 'transparent': {
-        const AdminFactory = await getProxyAdminFactory(hre, ImplFactory.signer);
-        const admin = AdminFactory.attach(adminAddress);
+        const AdminFactory = await getProxyAdminFactory(hre, factory.signer);
+        const admin = attach(AdminFactory, adminAddress);
         const manifestAdmin = await manifest.getAdmin();
         if (admin.address !== manifestAdmin?.address) {
           throw new Error('Proxy admin is not the one registered in the network manifest');
         }
-        const nextImpl = await deployImpl(hre, ImplFactory, requiredOpts, { proxyAddress, manifest });
+        const nextImpl = await deployImpl(hre, factory, requiredOpts, { proxyAddress, manifest });
         await admin.upgrade(proxyAddress, nextImpl);
         break;
       }
     }
 
-    return ImplFactory.attach(proxyAddress);
+    return attach(factory, proxyAddress);
   };
 }

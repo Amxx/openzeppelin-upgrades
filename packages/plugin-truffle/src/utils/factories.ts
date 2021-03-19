@@ -1,4 +1,4 @@
-import { TruffleContract, ContractClass, getTruffleDefaults, getTruffleProvider } from './truffle';
+import { TruffleContract, ContractClass, getTruffleDefaults, getTruffleProvider } from '../types/truffle';
 
 import ERC1967ProxyArtifact from '@openzeppelin/upgrades-core/artifacts/@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol/ERC1967Proxy.json';
 import TransparentUpgradeableProxyArtifact from '@openzeppelin/upgrades-core/artifacts/@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol/TransparentUpgradeableProxy.json';

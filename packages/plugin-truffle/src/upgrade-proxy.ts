@@ -1,19 +1,24 @@
 import { Manifest, getAdminAddress } from '@openzeppelin/upgrades-core';
 
 import {
-  ContractClass,
+  ContractFactory,
   ContractInstance,
-  wrapProvider,
+  UpgradeProxyFunction,
+  Options,
+  withDefaults,
+} from './types/index';
+
+import {
+  attach,
   deployImpl,
   getTransparentUpgradeableProxyFactory,
   getProxyAdminFactory,
-  Options,
-  withDefaults,
+  wrapProvider,
 } from './utils';
 
-export async function upgradeProxy(
+export const upgradeProxy: UpgradeProxyFunction = async function(
   proxyAddress: string,
-  Contract: ContractClass,
+  factory: ContractFactory,
   opts: Options = {},
 ): Promise<ContractInstance> {
   const requiredOpts: Required<Options> = withDefaults(opts);
@@ -30,27 +35,27 @@ export async function upgradeProxy(
   switch (requiredOpts.kind) {
     case 'uups': {
       // Use TransparentUpgradeableProxyFactory to get proxiable interface
-      const TransparentUpgradeableProxyFactory = getTransparentUpgradeableProxyFactory(Contract);
-      const proxy = new TransparentUpgradeableProxyFactory(proxyAddress);
-      const nextImpl = await deployImpl(Contract, requiredOpts, { proxyAddress, manifest });
+      const TransparentUpgradeableProxyFactory = getTransparentUpgradeableProxyFactory(factory);
+      const proxy = attach(TransparentUpgradeableProxyFactory, proxyAddress);
+      const nextImpl = await deployImpl(factory, requiredOpts, { proxyAddress, manifest });
       await proxy.upgradeTo(nextImpl);
       break;
     }
 
     case 'transparent': {
-      const AdminFactory = getProxyAdminFactory(Contract);
-      const admin = new AdminFactory(adminAddress);
+      const AdminFactory = getProxyAdminFactory(factory);
+      const admin = attach(AdminFactory, adminAddress);
       const manifestAdmin = await manifest.getAdmin();
       if (admin.address !== manifestAdmin?.address) {
         throw new Error('Proxy admin is not the one registered in the network manifest');
       }
 
-      const nextImpl = await deployImpl(Contract, requiredOpts, { proxyAddress, manifest });
+      const nextImpl = await deployImpl(factory, requiredOpts, { proxyAddress, manifest });
       await admin.upgrade(proxyAddress, nextImpl);
       break;
     }
   }
 
-  Contract.address = proxyAddress;
-  return new Contract(proxyAddress);
+  factory.address = proxyAddress;
+  return attach(factory, proxyAddress);
 }
