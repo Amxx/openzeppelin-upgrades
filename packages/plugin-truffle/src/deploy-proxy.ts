@@ -2,24 +2,17 @@ import chalk from 'chalk';
 import { Manifest, fetchOrDeployProxy, fetchOrDeployAdmin } from '@openzeppelin/upgrades-core';
 
 import {
-  ContractClass,
-  ContractInstance,
-  wrapProvider,
+  attach,
   deploy,
   deployImpl,
   getProxyFactory,
   getTransparentUpgradeableProxyFactory,
   getProxyAdminFactory,
-  Options,
-  withDefaults,
+  wrapProvider,
 } from './utils';
 
-export async function deployProxy(Contract: ContractClass, opts?: Options): Promise<ContractInstance>;
-
-export async function deployProxy(Contract: ContractClass, args?: unknown[], opts?: Options): Promise<ContractInstance>;
-
-export async function deployProxy(
-  Contract: ContractClass,
+export const deployProxy: DeployProxyFunction = async function(
+  factory: ContractFactory,
   args: unknown[] | Options = [],
   opts: Options = {},
 ): Promise<ContractInstance> {
@@ -72,17 +65,17 @@ export async function deployProxy(
   return contract;
 }
 
-function getInitializerData(Contract: ContractClass, args: unknown[], initializer: string | false): string {
+function getInitializerData(factory: ContractFactory, args: unknown[], initializer: string | false): string {
   if (initializer === false) {
     return '0x';
   }
 
-  const stub = new Contract('');
+  const stub = new factory('');
   if (initializer in stub.contract.methods) {
     return stub.contract.methods[initializer](...args).encodeABI();
   } else if (initializer === 'initialize' && args.length === 0) {
     return '0x';
   } else {
-    throw new Error(`Contract ${Contract.name} does not have a function \`${initializer}\``);
+    throw new Error(`Contract ${factory.name} does not have a function \`${initializer}\``);
   }
 }

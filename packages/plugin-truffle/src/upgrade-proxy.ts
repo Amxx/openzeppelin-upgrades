@@ -1,19 +1,24 @@
 import { Manifest, getAdminAddress } from '@openzeppelin/upgrades-core';
 
 import {
-  ContractClass,
+  ContractFactory,
   ContractInstance,
-  wrapProvider,
+  UpgradeProxyFunction,
+  Options,
+  withDefaults,
+} from './types/index';
+
+import {
+  attach,
   deployImpl,
   getTransparentUpgradeableProxyFactory,
   getProxyAdminFactory,
-  Options,
-  withDefaults,
+  wrapProvider,
 } from './utils';
 
-export async function upgradeProxy(
+export const upgradeProxy: UpgradeProxyFunction = async function(
   proxyAddress: string,
-  Contract: ContractClass,
+  factory: ContractFactory,
   opts: Options = {},
 ): Promise<ContractInstance> {
   const requiredOpts: Required<Options> = withDefaults(opts);
@@ -56,6 +61,6 @@ export async function upgradeProxy(
     await admin.upgrade(proxyAddress, nextImpl);
   }
 
-  Contract.address = proxyAddress;
-  return new Contract(proxyAddress);
+  factory.address = proxyAddress;
+  return attach(factory, proxyAddress);
 }

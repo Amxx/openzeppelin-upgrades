@@ -1,5 +1,5 @@
 import type { Deployment } from '@openzeppelin/upgrades-core';
-import type { ContractClass, Deployer } from './truffle';
+import type { ContractFactory, ContractInstance, Deployer } from '../types/index';
 
 export async function deploy(deployer: Deployer, contract: ContractClass, ...args: unknown[]): Promise<Deployment> {
   const { address, transactionHash: txHash } = await deployer.deploy(contract, ...args);
@@ -7,4 +7,8 @@ export async function deploy(deployer: Deployer, contract: ContractClass, ...arg
     throw new Error('Transaction hash is undefined');
   }
   return { address, txHash };
+}
+
+export function attach(factory: ContractFactory, address: string): ContractInstance {
+  return new factory(address);
 }

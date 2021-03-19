@@ -7,14 +7,18 @@ import { TASK_COMPILE_SOLIDITY, TASK_COMPILE_SOLIDITY_COMPILE } from 'hardhat/bu
 import { lazyObject } from 'hardhat/plugins';
 
 import type { silenceWarnings, SolcInput } from '@openzeppelin/upgrades-core';
-import type { DeployFunction } from './deploy-proxy';
-import type { PrepareUpgradeFunction } from './prepare-upgrade';
-import type { UpgradeFunction } from './upgrade-proxy';
-import type { ChangeAdminFunction, TransferProxyAdminOwnershipFunction, GetInstanceFunction } from './admin';
+import type {
+  DeployProxyFunction,
+  UpgradeProxyFunction,
+  PrepareUpgradeFunction,
+  ChangeAdminFunction,
+  TransferProxyAdminOwnershipFunction,
+  GetInstanceFunction,
+ } from './types';
 
 export interface HardhatUpgrades {
-  deployProxy: DeployFunction;
-  upgradeProxy: UpgradeFunction;
+  deployProxy: DeployProxyFunction;
+  upgradeProxy: UpgradeProxyFunction;
   prepareUpgrade: PrepareUpgradeFunction;
   silenceWarnings: typeof silenceWarnings;
   admin: {

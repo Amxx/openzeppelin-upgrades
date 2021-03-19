@@ -1,8 +1,13 @@
 import chalk from 'chalk';
 import type { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { Manifest, getAdminAddress } from '@openzeppelin/upgrades-core';
-import { Contract } from 'ethers';
-import { getProxyAdminFactory } from './utils';
+import {
+  ContractInstance,
+  ChangeAdminFunction,
+  TransferProxyAdminOwnershipFunction,
+  GetInstanceFunction,
+} from './types/index';
+import { getProxyAdminFactory, attach } from './utils';
 
 const SUCCESS_CHECK = chalk.keyword('green')('✔') + ' ';
 const FAILURE_CROSS = chalk.keyword('red')('✘') + ' ';
@@ -12,7 +17,7 @@ export type TransferProxyAdminOwnershipFunction = (newOwner: string) => Promise<
 export type GetInstanceFunction = () => Promise<Contract>;
 
 export function makeChangeProxyAdmin(hre: HardhatRuntimeEnvironment): ChangeAdminFunction {
-  return async function changeProxyAdmin(proxyAddress, newAdmin) {
+  return async function changeProxyAdmin(proxyAddress: string, newAdmin: string) {
     const admin = await getManifestAdmin(hre);
     const proxyAdminAddress = await getAdminAddress(hre.network.provider, proxyAddress);
 
@@ -25,7 +30,7 @@ export function makeChangeProxyAdmin(hre: HardhatRuntimeEnvironment): ChangeAdmi
 }
 
 export function makeTransferProxyAdminOwnership(hre: HardhatRuntimeEnvironment): TransferProxyAdminOwnershipFunction {
-  return async function transferProxyAdminOwnership(newOwner) {
+  return async function transferProxyAdminOwnership(newOwner: string) {
     const admin = await getManifestAdmin(hre);
     await admin.transferOwnership(newOwner);
 
@@ -48,7 +53,7 @@ export function makeGetInstanceFunction(hre: HardhatRuntimeEnvironment): GetInst
   };
 }
 
-export async function getManifestAdmin(hre: HardhatRuntimeEnvironment): Promise<Contract> {
+export async function getManifestAdmin(hre: HardhatRuntimeEnvironment): Promise<ContractInstance> {
   const manifest = await Manifest.forNetwork(hre.network.provider);
   const manifestAdmin = await manifest.getAdmin();
   const proxyAdminAddress = manifestAdmin?.address;
@@ -58,5 +63,5 @@ export async function getManifestAdmin(hre: HardhatRuntimeEnvironment): Promise<
   }
 
   const AdminFactory = await getProxyAdminFactory(hre);
-  return AdminFactory.attach(proxyAdminAddress);
+  return attach(AdminFactory, proxyAdminAddress);
 }

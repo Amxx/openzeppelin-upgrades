@@ -1,10 +1,17 @@
 import { Manifest } from '@openzeppelin/upgrades-core';
 
-import { ContractClass, wrapProvider, deployImpl, Options, withDefaults } from './utils';
+import {
+  ContractFactory,
+  PrepareUpgradeFunction,
+  Options,
+  withDefaults,
+} from './types/index';
 
-export async function prepareUpgrade(
+import { deployImpl, wrapProvider } from './utils';
+
+export const prepareUpgrade: PrepareUpgradeFunction = async function (
   proxyAddress: string,
-  Contract: ContractClass,
+  factory: ContractFactory,
   opts: Options = {},
 ): Promise<string> {
   const requiredOpts: Required<Options> = withDefaults(opts);
@@ -25,5 +32,5 @@ export async function prepareUpgrade(
     }
   }
 
-  return await deployImpl(Contract, requiredOpts, { proxyAddress, manifest });
+  return await deployImpl(factory, requiredOpts, { proxyAddress, manifest });
 }

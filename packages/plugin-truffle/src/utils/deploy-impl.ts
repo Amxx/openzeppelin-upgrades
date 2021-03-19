@@ -1,22 +1,26 @@
 import {
+  ContractFactory,
+  Options,
+  getTruffleConfig,
+} from '../types/index';
+
+import {
+  Manifest,
   assertUpgradeSafe,
   assertStorageUpgradeSafe,
   getStorageLayout,
   fetchOrDeploy,
   getVersion,
-  Manifest,
   getImplementationAddress,
   getStorageLayoutForAddress,
 } from '@openzeppelin/upgrades-core';
 
 import { deploy } from './deploy';
-import { Options } from './options';
-import { ContractClass, getTruffleConfig } from './truffle';
 import { validateArtifacts, getLinkedBytecode } from './validations';
 import { wrapProvider } from './wrap-provider';
 
 export async function deployImpl(
-  Contract: ContractClass,
+  factory: ContractFactory,
   requiredOpts: Required<Options>,
   checkStorageUpgrade?: { proxyAddress: string; manifest: Manifest },
 ): Promise<string> {
@@ -27,10 +31,10 @@ export async function deployImpl(
   const provider = wrapProvider(requiredOpts.deployer.provider);
   const { contracts_build_directory, contracts_directory } = getTruffleConfig();
   const validations = await validateArtifacts(contracts_build_directory, contracts_directory);
-  const linkedBytecode: string = await getLinkedBytecode(Contract, provider);
-  const version = getVersion(Contract.bytecode, linkedBytecode);
-  const layout = getStorageLayout([validations], version);
-  assertUpgradeSafe([validations], version, requiredOpts);
+  const linkedBytecode = await getLinkedBytecode(factory, provider);
+  const version = getVersion(factory.bytecode, linkedBytecode);
+  const layout = getStorageLayout(validations, version);
+  assertUpgradeSafe(validations, version, requiredOpts);
 
   if (checkStorageUpgrade) {
     const currentImplAddress = await getImplementationAddress(provider, checkStorageUpgrade.proxyAddress);

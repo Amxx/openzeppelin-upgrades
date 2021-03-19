@@ -18,7 +18,7 @@ async function changeProxyAdmin(proxyAddress: string, newAdmin: string, opts: Op
   }
 }
 
-async function transferProxyAdminOwnership(newOwner: string, opts: Options = {}): Promise<void> {
+const transferProxyAdminOwnership: TransferProxyAdminOwnershipFunction = async function(newOwner: string, opts: Options = {}): Promise<void> {
   const { deployer } = withDefaults(opts);
   const provider = wrapProvider(deployer.provider);
   const admin = await getManifestAdmin(provider);
@@ -35,7 +35,7 @@ async function transferProxyAdminOwnership(newOwner: string, opts: Options = {})
   }
 }
 
-async function getInstance(opts: Options = {}): Promise<ContractInstance> {
+const getInstance: GetInstanceFunction = async function(opts: Options = {}): Promise<ContractInstance> {
   const { deployer } = withDefaults(opts);
   const provider = wrapProvider(deployer.provider);
   return await getManifestAdmin(provider);
@@ -44,14 +44,14 @@ async function getInstance(opts: Options = {}): Promise<ContractInstance> {
 export async function getManifestAdmin(provider: EthereumProvider): Promise<ContractInstance> {
   const manifest = await Manifest.forNetwork(provider);
   const manifestAdmin = await manifest.getAdmin();
-  const AdminFactory = getProxyAdminFactory();
   const proxyAdminAddress = manifestAdmin?.address;
 
   if (proxyAdminAddress === undefined) {
     throw new Error('No ProxyAdmin was found in the network manifest');
   }
 
-  return new AdminFactory(proxyAdminAddress);
+  const AdminFactory = getProxyAdminFactory();
+  return attach(AdminFactory, proxyAdminAddress);
 }
 
 export const admin = {

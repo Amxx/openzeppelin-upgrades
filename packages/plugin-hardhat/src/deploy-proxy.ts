@@ -5,22 +5,20 @@ import type { ContractFactory, Contract } from 'ethers';
 import { Manifest, fetchOrDeployProxy, fetchOrDeployAdmin } from '@openzeppelin/upgrades-core';
 
 import {
+  attach,
   deploy,
   deployImpl,
   getProxyFactory,
   getTransparentUpgradeableProxyFactory,
   getProxyAdminFactory,
-  Options,
-  withDefaults,
 } from './utils';
 
-export interface DeployFunction {
-  (ImplFactory: ContractFactory, args?: unknown[], opts?: Options): Promise<Contract>;
-  (ImplFactory: ContractFactory, opts?: Options): Promise<Contract>;
-}
-
-export function makeDeployProxy(hre: HardhatRuntimeEnvironment): DeployFunction {
-  return async function deployProxy(ImplFactory: ContractFactory, args: unknown[] | Options = [], opts: Options = {}) {
+export function makeDeployProxy(hre: HardhatRuntimeEnvironment): DeployProxyFunction {
+  return async function deployProxy(
+    factory: ContractFactory,
+    args: unknown[] | Options = [],
+    opts: Options = {},
+  ): Promise<ContractInstance> {
     if (!Array.isArray(args)) {
       opts = args;
       args = [];
@@ -50,7 +48,7 @@ export function makeDeployProxy(hre: HardhatRuntimeEnvironment): DeployFunction 
 
       case 'auto':
       case 'transparent': {
-        const AdminFactory = await getProxyAdminFactory(hre, ImplFactory.signer);
+        const AdminFactory = await getProxyAdminFactory(hre, factory.signer);
         const adminAddress = await fetchOrDeployAdmin(provider, () => deploy(AdminFactory));
         const TransparentUpgradeableProxyFactory = await getTransparentUpgradeableProxyFactory(hre, ImplFactory.signer);
         proxyAddress = await fetchOrDeployProxy(provider, 'transparent', () =>
@@ -69,14 +67,14 @@ export function makeDeployProxy(hre: HardhatRuntimeEnvironment): DeployFunction 
     return inst;
   };
 
-  function getInitializerData(ImplFactory: ContractFactory, args: unknown[], initializer: string | false): string {
+  function getInitializerData(factory: ContractFactory, args: unknown[], initializer: string | false): string {
     if (initializer === false) {
       return '0x';
     }
 
     try {
-      const fragment = ImplFactory.interface.getFunction(initializer);
-      return ImplFactory.interface.encodeFunctionData(fragment, args);
+      const fragment = factory.interface.getFunction(initializer);
+      return factory.interface.encodeFunctionData(fragment, args);
     } catch (e: unknown) {
       if (e instanceof Error) {
         if (initializer === 'initialize' && args.length === 0 && e.message.includes('no matching function')) {
