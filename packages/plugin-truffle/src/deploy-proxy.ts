@@ -1,21 +1,18 @@
+import { fetchOrDeployAdmin } from '@openzeppelin/upgrades-core';
+
 import {
+  Environment,
   ContractFactory,
   ContractInstance,
   DeployProxyFunction,
   Options,
   withDefaults,
-} from './types/index';
-
-import { fetchOrDeployAdmin } from '@openzeppelin/upgrades-core';
-
-import {
   attach,
   deploy,
   deployImpl,
   getProxyFactory,
   getTransparentUpgradeableProxyFactory,
   getProxyAdminFactory,
-  wrapProvider,
 } from './utils';
 
 export const deployProxy: DeployProxyFunction = async function(
@@ -28,24 +25,25 @@ export const deployProxy: DeployProxyFunction = async function(
     args = [];
   }
   const requiredOpts: Required<Options> = withDefaults(opts);
+  const env: Environment = requiredOpts;
 
-  const provider = wrapProvider(requiredOpts.deployer.provider);
-  const impl = await deployImpl(factory, requiredOpts);
+  const { provider } = env;
+  const impl = await deployImpl(env, factory, requiredOpts);
   const data = getInitializerData(factory, args, requiredOpts.initializer);
 
   let proxy: ContractInstance;
   switch (requiredOpts.kind) {
     case 'auto':
     case 'uups': {
-      const ProxyFactory = getProxyFactory(factory);
+      const ProxyFactory = await getProxyFactory(env); // TODO: pass factory.currentProvider
       proxy = await requiredOpts.deployer.deploy(ProxyFactory, impl, data);
       break;
     }
 
     case 'transparent': {
-      const AdminFactory = getProxyAdminFactory(factory);
+      const AdminFactory = await getProxyAdminFactory(env); // TODO: pass factory.currentProvider
       const adminAddress = await fetchOrDeployAdmin(provider, () => deploy(AdminFactory, requiredOpts.deployer));
-      const TransparentUpgradeableProxyFactory = getTransparentUpgradeableProxyFactory(factory);
+      const TransparentUpgradeableProxyFactory = await getTransparentUpgradeableProxyFactory(env); // TODO: pass factory.currentProvider
       proxy = await requiredOpts.deployer.deploy(TransparentUpgradeableProxyFactory, impl, adminAddress, data);
       break;
     }

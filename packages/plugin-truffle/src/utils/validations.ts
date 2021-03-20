@@ -10,7 +10,7 @@ import {
 } from '@openzeppelin/upgrades-core';
 import type { SolcInput, SolcOutput, SolcLinkReferences } from '@openzeppelin/upgrades-core/dist/solc-api';
 
-import { TruffleArtifact, ContractClass, NetworkObject } from '../types/truffle';
+import { TruffleArtifact, ContractClass, NetworkObject } from '../specialize/truffle';
 
 export async function validateArtifacts(artifactsPath: string, sourcesPath: string): Promise<ValidationRunData> {
   const artifacts = await readArtifacts(artifactsPath);

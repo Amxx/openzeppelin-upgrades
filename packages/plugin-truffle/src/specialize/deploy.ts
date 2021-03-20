@@ -1,5 +1,5 @@
 import type { Deployment } from '@openzeppelin/upgrades-core';
-import type { ContractFactory, ContractInstance, Deployer } from '../types/index';
+import type { ContractFactory, ContractInstance, Deployer } from './types';
 
 export async function deploy(factory: ContractFactory, deployer: Deployer): Promise<Deployment> {
   const { address, transactionHash: txHash } = await deployer.deploy(factory);

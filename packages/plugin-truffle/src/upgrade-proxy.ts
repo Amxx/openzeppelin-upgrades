@@ -1,19 +1,16 @@
 import { Manifest, getAdminAddress } from '@openzeppelin/upgrades-core';
 
 import {
+  Environment,
   ContractFactory,
   ContractInstance,
   UpgradeProxyFunction,
   Options,
   withDefaults,
-} from './types/index';
-
-import {
   attach,
   deployImpl,
   getTransparentUpgradeableProxyFactory,
   getProxyAdminFactory,
-  wrapProvider,
 } from './utils';
 
 export const upgradeProxy: UpgradeProxyFunction = async function(
@@ -22,8 +19,9 @@ export const upgradeProxy: UpgradeProxyFunction = async function(
   opts: Options = {},
 ): Promise<ContractInstance> {
   const requiredOpts: Required<Options> = withDefaults(opts);
+  const env: Environment = requiredOpts;
 
-  const provider = wrapProvider(requiredOpts.deployer.provider);
+  const { provider } = env;
   const manifest = await Manifest.forNetwork(provider);
 
   // Autodetect proxy type
@@ -35,22 +33,22 @@ export const upgradeProxy: UpgradeProxyFunction = async function(
   switch (requiredOpts.kind) {
     case 'uups': {
       // Use TransparentUpgradeableProxyFactory to get proxiable interface
-      const TransparentUpgradeableProxyFactory = getTransparentUpgradeableProxyFactory(factory);
+      const TransparentUpgradeableProxyFactory = await getTransparentUpgradeableProxyFactory(env); // TODO: pass factory.currentProvider
       const proxy = attach(TransparentUpgradeableProxyFactory, proxyAddress);
-      const nextImpl = await deployImpl(factory, requiredOpts, { proxyAddress, manifest });
+      const nextImpl = await deployImpl(env, factory, requiredOpts, { proxyAddress, manifest });
       await proxy.upgradeTo(nextImpl);
       break;
     }
 
     case 'transparent': {
-      const AdminFactory = getProxyAdminFactory(factory);
+      const AdminFactory = await getProxyAdminFactory(env); // TODO: pass factory.currentProvider
       const admin = attach(AdminFactory, adminAddress);
       const manifestAdmin = await manifest.getAdmin();
       if (admin.address !== manifestAdmin?.address) {
         throw new Error('Proxy admin is not the one registered in the network manifest');
       }
 
-      const nextImpl = await deployImpl(factory, requiredOpts, { proxyAddress, manifest });
+      const nextImpl = await deployImpl(env, factory, requiredOpts, { proxyAddress, manifest });
       await admin.upgrade(proxyAddress, nextImpl);
       break;
     }

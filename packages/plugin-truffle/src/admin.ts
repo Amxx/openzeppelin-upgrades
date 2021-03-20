@@ -1,19 +1,21 @@
 import { EthereumProvider, Manifest, getAdminAddress } from '@openzeppelin/upgrades-core';
+
 import {
+  Environment,
   ContractInstance,
   ChangeAdminFunction,
   TransferProxyAdminOwnershipFunction,
   GetInstanceFunction,
+  getProxyAdminFactory,
+  attach,
   Options,
   withDefaults,
-} from './types/index';
-import { getProxyAdminFactory, attach, wrapProvider } from './utils';
+} from './utils';
 
 const changeProxyAdmin: ChangeAdminFunction = async function(proxyAddress: string, newAdmin: string, opts: Options = {}): Promise<void> {
-  const { deployer } = withDefaults(opts);
-  const provider = wrapProvider(deployer.provider);
-  const admin = await getManifestAdmin(provider);
-  const proxyAdminAddress = await getAdminAddress(provider, proxyAddress);
+  const env: Environment = withDefaults(opts);
+  const admin = await getManifestAdmin(env);
+  const proxyAdminAddress = await getAdminAddress(env.provider, proxyAddress);
 
   if (admin.address !== proxyAdminAddress) {
     throw new Error('Proxy admin is not the one registered in the network manifest');
@@ -23,19 +25,18 @@ const changeProxyAdmin: ChangeAdminFunction = async function(proxyAddress: strin
 }
 
 const transferProxyAdminOwnership: TransferProxyAdminOwnershipFunction = async function(newOwner: string, opts: Options = {}): Promise<void> {
-  const { deployer } = withDefaults(opts);
-  const provider = wrapProvider(deployer.provider);
-  const admin = await getManifestAdmin(provider);
+  const env: Environment = withDefaults(opts);
+  const admin = await getManifestAdmin(env);
   await admin.transferOwnership(newOwner);
 }
 
 const getInstance: GetInstanceFunction = async function(opts: Options = {}): Promise<ContractInstance> {
-  const { deployer } = withDefaults(opts);
-  const provider = wrapProvider(deployer.provider);
-  return await getManifestAdmin(provider);
+  const env: Environment = withDefaults(opts);
+  return await getManifestAdmin(env);
 }
 
-export async function getManifestAdmin(provider: EthereumProvider): Promise<ContractInstance> {
+export async function getManifestAdmin(env: Environment): Promise<ContractInstance> {
+  const { provider } = env;
   const manifest = await Manifest.forNetwork(provider);
   const manifestAdmin = await manifest.getAdmin();
   const proxyAdminAddress = manifestAdmin?.address;
@@ -44,7 +45,7 @@ export async function getManifestAdmin(provider: EthereumProvider): Promise<Cont
     throw new Error('No ProxyAdmin was found in the network manifest');
   }
 
-  const AdminFactory = getProxyAdminFactory();
+  const AdminFactory = await getProxyAdminFactory(env);
   return attach(AdminFactory, proxyAdminAddress);
 }
 

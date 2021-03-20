@@ -1,24 +1,23 @@
-import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { Manifest, getAdminAddress } from '@openzeppelin/upgrades-core';
 
 import {
+  Environment,
   ContractFactory,
   PrepareUpgradeFunction,
   Options,
   withDefaults,
-} from './types/index';
+  deployImpl,
+} from './utils';
 
-import { deployImpl } from './utils';
-
-export function makePrepareUpgrade(hre: HardhatRuntimeEnvironment): PrepareUpgradeFunction {
+export function makePrepareUpgrade(env: Environment): PrepareUpgradeFunction {
   return async function prepareUpgrade(
     proxyAddress: string,
     factory: ContractFactory,
     opts: Options = {},
   ): Promise<string> {
-    const requiredOpts: Required<Options> = withDefaults(opts);
+    const requiredOpts: Required<Options> = withDefaults({ deployer: factory.signer, ...opts });
 
-    const { provider } = hre.network;
+    const { provider } = env.network;
     const manifest = await Manifest.forNetwork(provider);
 
     // Autodetect proxy type
@@ -27,6 +26,6 @@ export function makePrepareUpgrade(hre: HardhatRuntimeEnvironment): PrepareUpgra
       requiredOpts.kind = adminAddress === '0x0000000000000000000000000000000000000000' ? 'uups' : 'transparent';
     }
 
-    return await deployImpl(hre, factory, requiredOpts, { proxyAddress, manifest });
+    return await deployImpl(env, factory, requiredOpts, { proxyAddress, manifest });
   };
 }

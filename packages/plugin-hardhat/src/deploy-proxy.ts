@@ -1,16 +1,12 @@
-import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import { fetchOrDeployAdmin } from '@openzeppelin/upgrades-core';
 
 import {
+  Environment,
   ContractFactory,
   ContractInstance,
   DeployProxyFunction,
   Options,
   withDefaults,
-} from './types/index';
-
-import { fetchOrDeployAdmin } from '@openzeppelin/upgrades-core';
-
-import {
   attach,
   deploy,
   deployImpl,
@@ -19,7 +15,7 @@ import {
   getProxyAdminFactory,
 } from './utils';
 
-export function makeDeployProxy(hre: HardhatRuntimeEnvironment): DeployProxyFunction {
+export function makeDeployProxy(env: Environment): DeployProxyFunction {
   return async function deployProxy(
     factory: ContractFactory,
     args: unknown[] | Options = [],
@@ -29,25 +25,25 @@ export function makeDeployProxy(hre: HardhatRuntimeEnvironment): DeployProxyFunc
       opts = args;
       args = [];
     }
-    const requiredOpts: Required<Options> = withDefaults(opts);
+    const requiredOpts: Required<Options> = withDefaults({ deployer: factory.signer, ...opts });
 
-    const { provider } = hre.network;
-    const impl = deployImpl(hre, factory, requiredOpts);
+    const { provider } = env.network;
+    const impl = deployImpl(env, factory, requiredOpts);
     const data = getInitializerData(factory, args, requiredOpts.initializer);
 
     let proxy: ContractInstance;
     switch (requiredOpts.kind) {
       case 'auto':
       case 'uups': {
-        const ProxyFactory = await getProxyFactory(hre, factory.signer);
+        const ProxyFactory = await getProxyFactory(env, factory.signer);
         proxy = await ProxyFactory.deploy(impl, data);
         break;
       }
 
       case 'transparent': {
-        const AdminFactory = await getProxyAdminFactory(hre, factory.signer);
+        const AdminFactory = await getProxyAdminFactory(env, factory.signer);
         const adminAddress = await fetchOrDeployAdmin(provider, () => deploy(AdminFactory));
-        const TransparentUpgradeableProxyFactory = await getTransparentUpgradeableProxyFactory(hre, factory.signer);
+        const TransparentUpgradeableProxyFactory = await getTransparentUpgradeableProxyFactory(env, factory.signer);
         proxy = await TransparentUpgradeableProxyFactory.deploy(impl, adminAddress, data);
         break;
       }
