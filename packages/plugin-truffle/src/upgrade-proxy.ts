@@ -1,19 +1,16 @@
 import { Manifest, getAdminAddress } from '@openzeppelin/upgrades-core';
 
 import {
+  Environment,
   ContractFactory,
   ContractInstance,
   UpgradeProxyFunction,
   Options,
   withDefaults,
-} from './types/index';
-
-import {
   attach,
   deployImpl,
   getTransparentUpgradeableProxyFactory,
   getProxyAdminFactory,
-  wrapProvider,
 } from './utils';
 
 export const upgradeProxy: UpgradeProxyFunction = async function(
@@ -22,8 +19,9 @@ export const upgradeProxy: UpgradeProxyFunction = async function(
   opts: Options = {},
 ): Promise<ContractInstance> {
   const requiredOpts: Required<Options> = withDefaults(opts);
+  const env: Environment = requiredOpts;
 
-  const provider = wrapProvider(requiredOpts.deployer.provider);
+  const { provider } = env;
   const manifest = await Manifest.forNetwork(provider);
 
   if (requiredOpts.kind === 'auto') {

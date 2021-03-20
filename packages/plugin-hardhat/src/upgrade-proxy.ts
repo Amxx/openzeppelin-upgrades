@@ -1,30 +1,27 @@
-import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { Manifest, getAdminAddress } from '@openzeppelin/upgrades-core';
 
 import {
+  Environment,
   ContractFactory,
   ContractInstance,
   UpgradeProxyFunction,
   Options,
   withDefaults,
-} from './types/index';
-
-import {
   attach,
   deployImpl,
   getTransparentUpgradeableProxyFactory,
   getProxyAdminFactory,
 } from './utils';
 
-export function makeUpgradeProxy(hre: HardhatRuntimeEnvironment): UpgradeProxyFunction {
+export function makeUpgradeProxy(env: Environment): UpgradeProxyFunction {
   return async function upgradeProxy(
     proxyAddress: string,
     factory: ContractFactory,
     opts: Options = {},
   ): Promise<ContractInstance> {
-    const requiredOpts: Required<Options> = withDefaults(opts);
+    const requiredOpts: Required<Options> = withDefaults({ deployer: factory.signer, ...opts });
 
-    const { provider } = hre.network;
+    const { provider } = env.network;
     const manifest = await Manifest.forNetwork(provider);
 
     if (requiredOpts.kind === 'auto') {

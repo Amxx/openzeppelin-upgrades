@@ -28,7 +28,7 @@ contract('Admin', function () {
 
   it('transferProxyAdminOwnership', async function () {
     await upgrades.admin.transferProxyAdminOwnership(testAddress);
-    const admin = await getManifestAdmin(provider);
+    const admin = await getManifestAdmin({ provider });
     const newOwner = await admin.owner();
     assert.strictEqual(newOwner, testAddress);
   });

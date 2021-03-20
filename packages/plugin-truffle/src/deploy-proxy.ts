@@ -8,7 +8,6 @@ import {
   getProxyFactory,
   getTransparentUpgradeableProxyFactory,
   getProxyAdminFactory,
-  wrapProvider,
 } from './utils';
 
 export const deployProxy: DeployProxyFunction = async function(
@@ -21,6 +20,7 @@ export const deployProxy: DeployProxyFunction = async function(
     args = [];
   }
   const requiredOpts: Required<Options> = withDefaults(opts);
+  const env: Environment = requiredOpts;
 
   const provider = wrapProvider(requiredOpts.deployer.provider);
   const manifest = await Manifest.forNetwork(provider);

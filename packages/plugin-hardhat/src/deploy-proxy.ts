@@ -13,7 +13,7 @@ import {
   getProxyAdminFactory,
 } from './utils';
 
-export function makeDeployProxy(hre: HardhatRuntimeEnvironment): DeployProxyFunction {
+export function makeDeployProxy(env: Environment): DeployProxyFunction {
   return async function deployProxy(
     factory: ContractFactory,
     args: unknown[] | Options = [],
@@ -23,7 +23,7 @@ export function makeDeployProxy(hre: HardhatRuntimeEnvironment): DeployProxyFunc
       opts = args;
       args = [];
     }
-    const requiredOpts: Required<Options> = withDefaults(opts);
+    const requiredOpts: Required<Options> = withDefaults({ deployer: factory.signer, ...opts });
 
     const { provider } = hre.network;
     const manifest = await Manifest.forNetwork(provider);
@@ -48,7 +48,7 @@ export function makeDeployProxy(hre: HardhatRuntimeEnvironment): DeployProxyFunc
 
       case 'auto':
       case 'transparent': {
-        const AdminFactory = await getProxyAdminFactory(hre, factory.signer);
+        const AdminFactory = await getProxyAdminFactory(env, factory.signer);
         const adminAddress = await fetchOrDeployAdmin(provider, () => deploy(AdminFactory));
         const TransparentUpgradeableProxyFactory = await getTransparentUpgradeableProxyFactory(hre, ImplFactory.signer);
         proxyAddress = await fetchOrDeployProxy(provider, 'transparent', () =>

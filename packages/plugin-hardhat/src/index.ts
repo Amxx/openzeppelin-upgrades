@@ -14,7 +14,7 @@ import type {
   ChangeAdminFunction,
   TransferProxyAdminOwnershipFunction,
   GetInstanceFunction,
- } from './types';
+} from './utils/types';
 
 export interface HardhatUpgrades {
   deployProxy: DeployProxyFunction;

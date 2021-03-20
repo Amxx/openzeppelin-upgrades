@@ -1,10 +1,3 @@
-import { HardhatRuntimeEnvironment } from 'hardhat/types';
-
-import {
-  ContractFactory,
-  Options,
-} from '../types/index';
-
 import {
   Manifest,
   assertUpgradeSafe,
@@ -17,11 +10,17 @@ import {
   getStorageLayoutForAddress,
 } from '@openzeppelin/upgrades-core';
 
-import { deploy } from './deploy';
+import {
+  Environment,
+  ContractFactory,
+  Options,
+} from './types';
+
+import { deploy } from '../specialize/deploy';
 import { readValidations } from './validations';
 
 export async function deployImpl(
-  hre: HardhatRuntimeEnvironment,
+  env: Environment,
   factory: ContractFactory,
   requiredOpts: Required<Options>,
   checkStorageUpgrade?: { proxyAddress: string; manifest: Manifest },
@@ -30,8 +29,8 @@ export async function deployImpl(
     requiredOpts.unsafeAllow.push('no-public-upgrade-fn');
   }
 
-  const { provider } = hre.network;
-  const validations = await readValidations(hre);
+  const { provider } = env.network;
+  const validations = await readValidations(env);
   const unlinkedBytecode = getUnlinkedBytecode(validations, factory.bytecode);
   const version = getVersion(unlinkedBytecode, factory.bytecode);
   const layout = getStorageLayout(validations, version);

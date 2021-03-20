@@ -1,13 +1,13 @@
 import { Manifest } from '@openzeppelin/upgrades-core';
 
 import {
+  Environment,
   ContractFactory,
   PrepareUpgradeFunction,
   Options,
   withDefaults,
-} from './types/index';
-
-import { deployImpl, wrapProvider } from './utils';
+  deployImpl,
+} from './utils';
 
 export const prepareUpgrade: PrepareUpgradeFunction = async function (
   proxyAddress: string,
@@ -15,8 +15,9 @@ export const prepareUpgrade: PrepareUpgradeFunction = async function (
   opts: Options = {},
 ): Promise<string> {
   const requiredOpts: Required<Options> = withDefaults(opts);
+  const env: Environment = requiredOpts;
 
-  const provider = wrapProvider(requiredOpts.deployer.provider);
+  const { provider } = env;
   const manifest = await Manifest.forNetwork(provider);
 
   if (requiredOpts.kind === 'auto') {
@@ -32,5 +33,5 @@ export const prepareUpgrade: PrepareUpgradeFunction = async function (
     }
   }
 
-  return await deployImpl(factory, requiredOpts, { proxyAddress, manifest });
+  return await deployImpl(env, factory, requiredOpts, { proxyAddress, manifest });
 }

@@ -1,10 +1,4 @@
 import {
-  ContractFactory,
-  Options,
-  getTruffleConfig,
-} from '../types/index';
-
-import {
   Manifest,
   assertUpgradeSafe,
   assertStorageUpgradeSafe,
@@ -15,11 +9,18 @@ import {
   getStorageLayoutForAddress,
 } from '@openzeppelin/upgrades-core';
 
-import { deploy } from './deploy';
+import {
+  Environment,
+  ContractFactory,
+  Options,
+} from './types';
+
+import { deploy } from '../specialize/deploy';
 import { validateArtifacts, getLinkedBytecode } from './validations';
-import { wrapProvider } from './wrap-provider';
+import { getTruffleConfig } from '../specialize/truffle';
 
 export async function deployImpl(
+  env: Environment,
   factory: ContractFactory,
   requiredOpts: Required<Options>,
   checkStorageUpgrade?: { proxyAddress: string; manifest: Manifest },
@@ -28,7 +29,7 @@ export async function deployImpl(
     requiredOpts.unsafeAllow.push('no-public-upgrade-fn');
   }
 
-  const provider = wrapProvider(requiredOpts.deployer.provider);
+  const { provider } = env;
   const { contracts_build_directory, contracts_directory } = getTruffleConfig();
   const validations = await validateArtifacts(contracts_build_directory, contracts_directory);
   const linkedBytecode = await getLinkedBytecode(factory, provider);
