@@ -40,7 +40,7 @@ const getInstance: GetInstanceFunction = async function(opts: Options = {}): Pro
 }
 
 export async function getManifestAdmin(env: Environment): Promise<ContractInstance> {
-  const { provider } = env;
+  const { provider } = env.network;
   const manifest = await Manifest.forNetwork(provider);
   const manifestAdmin = await manifest.getAdmin();
   const proxyAdminAddress = manifestAdmin?.address;

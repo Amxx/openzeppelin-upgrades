@@ -21,7 +21,7 @@ export const upgradeProxy: UpgradeProxyFunction = async function(
   const requiredOpts: Required<Options> = withDefaults(opts);
   const env: Environment = requiredOpts;
 
-  const { provider } = env;
+  const { provider } = env.network;
   const manifest = await Manifest.forNetwork(provider);
 
   if (requiredOpts.kind === 'auto') {
