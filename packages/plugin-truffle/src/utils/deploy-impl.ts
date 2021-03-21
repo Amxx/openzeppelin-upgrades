@@ -29,7 +29,7 @@ export async function deployImpl(
     requiredOpts.unsafeAllow.push('no-public-upgrade-fn');
   }
 
-  const { provider } = env;
+  const { provider } = env.network;
   const { contracts_build_directory, contracts_directory } = getTruffleConfig();
   const validations = await validateArtifacts(contracts_build_directory, contracts_directory);
   const linkedBytecode = await getLinkedBytecode(factory, provider);

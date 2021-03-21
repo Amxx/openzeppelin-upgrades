@@ -39,8 +39,8 @@ export type ProxyKind = 'auto' | 'uups' | 'transparent';
 export type ProxyInitializer = string | false;
 
 export interface DeployOptions {
+  network?: { provider: Provider };
   deployer?: Deployer;
-  provider?: Provider;
   initializer?: ProxyInitializer;
   kind?: ProxyKind;
 }

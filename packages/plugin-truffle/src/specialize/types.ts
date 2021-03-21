@@ -2,7 +2,7 @@ import { Deployer } from './truffle';
 import { EthereumProvider as Provider } from '@openzeppelin/upgrades-core';
 
 export interface Environment {
-  provider: Provider;
+  network: { provider: Provider };
   deployer: Deployer;
 };
 

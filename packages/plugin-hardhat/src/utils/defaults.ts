@@ -3,12 +3,12 @@ import { getDefaultDeployer, getDefaultProvider } from '../specialize/defaults';
 import { Environment, Deployer, Provider, Options, DeployOptions } from './types';
 
 export function withDeployDefaults(opts: DeployOptions, env?: Environment): Required<DeployOptions> {
-  const deployer: Deployer = opts.deployer ?? getDefaultDeployer(env);
-  const provider: Provider = opts.provider ?? deployer?.provider ?? getDefaultProvider(env);
+  const deployer: Deployer = opts?.deployer ?? getDefaultDeployer(env);
+  const provider: Provider = opts?.network?.provider ?? deployer?.provider ?? getDefaultProvider(env);
 
   return {
     deployer,
-    provider,
+    network: { provider },
     initializer: opts.initializer ?? 'initialize',
     kind: opts.kind ?? 'auto',
   };

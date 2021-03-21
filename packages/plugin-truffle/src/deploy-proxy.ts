@@ -27,7 +27,7 @@ export const deployProxy: DeployProxyFunction = async function(
   const requiredOpts: Required<Options> = withDefaults(opts);
   const env: Environment = requiredOpts;
 
-  const { provider } = env;
+  const { provider } = env.network;
   const impl = await deployImpl(env, factory, requiredOpts);
   const data = getInitializerData(factory, args, requiredOpts.initializer);
 

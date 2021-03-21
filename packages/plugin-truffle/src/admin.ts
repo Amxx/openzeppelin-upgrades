@@ -1,4 +1,4 @@
-import { EthereumProvider, Manifest, getAdminAddress } from '@openzeppelin/upgrades-core';
+import { Manifest, getAdminAddress } from '@openzeppelin/upgrades-core';
 
 import {
   Environment,
@@ -15,7 +15,7 @@ import {
 const changeProxyAdmin: ChangeAdminFunction = async function(proxyAddress: string, newAdmin: string, opts: Options = {}): Promise<void> {
   const env: Environment = withDefaults(opts);
   const admin = await getManifestAdmin(env);
-  const proxyAdminAddress = await getAdminAddress(env.provider, proxyAddress);
+  const proxyAdminAddress = await getAdminAddress(env.network.provider, proxyAddress);
 
   if (admin.address !== proxyAdminAddress) {
     throw new Error('Proxy admin is not the one registered in the network manifest');
@@ -36,7 +36,7 @@ const getInstance: GetInstanceFunction = async function(opts: Options = {}): Pro
 }
 
 export async function getManifestAdmin(env: Environment): Promise<ContractInstance> {
-  const { provider } = env;
+  const { provider } = env.network;
   const manifest = await Manifest.forNetwork(provider);
   const manifestAdmin = await manifest.getAdmin();
   const proxyAdminAddress = manifestAdmin?.address;

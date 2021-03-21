@@ -17,7 +17,7 @@ export const prepareUpgrade: PrepareUpgradeFunction = async function (
   const requiredOpts: Required<Options> = withDefaults(opts);
   const env: Environment = requiredOpts;
 
-  const { provider } = env;
+  const { provider } = env.network;
   const manifest = await Manifest.forNetwork(provider);
 
   // Autodetect proxy type
