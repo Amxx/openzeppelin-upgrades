@@ -3,12 +3,11 @@
 import '@nomiclabs/hardhat-ethers';
 import './type-extensions';
 import { subtask, extendEnvironment } from 'hardhat/config';
-// import { TASK_COMPILE_SOLIDITY, TASK_COMPILE_SOLIDITY_COMPILE } from 'hardhat/builtin-tasks/task-names';
+import { TASK_COMPILE_SOLIDITY, TASK_COMPILE_SOLIDITY_COMPILE } from 'hardhat/builtin-tasks/task-names';
 import { lazyObject } from 'hardhat/plugins';
 
 import type { silenceWarnings, SolcInput } from '@openzeppelin/upgrades-core';
 import type {
-  E, D, F, I,
   DeployProxyFunction,
   UpgradeProxyFunction,
   PrepareUpgradeFunction,
@@ -33,44 +32,38 @@ interface RunCompilerArgs {
   input: SolcInput;
 }
 
-// subtask(TASK_COMPILE_SOLIDITY, async (args: { force: boolean }, hre, runSuper) => {
-//   const { readValidations, ValidationsCacheOutdated, ValidationsCacheNotFound } = await import('./utils/validations');
-//
-//   try {
-//     await readValidations(hre);
-//   } catch (e) {
-//     if (e instanceof ValidationsCacheOutdated || e instanceof ValidationsCacheNotFound) {
-//       args = { ...args, force: true };
-//     } else {
-//       throw e;
-//     }
-//   }
-//
-//   return runSuper(args);
-// });
+subtask(TASK_COMPILE_SOLIDITY, async (args: { force: boolean }, hre, runSuper) => {
+  const { readValidations, ValidationsCacheOutdated, ValidationsCacheNotFound } = await import('./utils/validations');
 
-// subtask(TASK_COMPILE_SOLIDITY_COMPILE, async (args: RunCompilerArgs, hre, runSuper) => {
-//   const { validate, solcInputOutputDecoder } = await import('@openzeppelin/upgrades-core');
-//   const { writeValidations } = await import('./utils/validations');
-//
-//   // TODO: patch input
-//   const { output, solcBuild } = await runSuper();
-//
-//   const { isFullSolcOutput } = await import('./utils/is-full-solc-output');
-//   if (isFullSolcOutput(output)) {
-//     const decodeSrc = solcInputOutputDecoder(args.input, output);
-//     const validations = validate(output, decodeSrc);
-//     await writeValidations(hre, validations);
-//   }
-//
-//   return { output, solcBuild };
-// });
+  try {
+    await readValidations(hre);
+  } catch (e) {
+    if (e instanceof ValidationsCacheOutdated || e instanceof ValidationsCacheNotFound) {
+      args = { ...args, force: true };
+    } else {
+      throw e;
+    }
+  }
 
+  return runSuper(args);
+});
 
+subtask(TASK_COMPILE_SOLIDITY_COMPILE, async (args: RunCompilerArgs, hre, runSuper) => {
+  const { validate, solcInputOutputDecoder } = await import('@openzeppelin/upgrades-core');
+  const { writeValidations } = await import('./utils/validations');
 
+  // TODO: patch input
+  const { output, solcBuild } = await runSuper();
 
+  const { isFullSolcOutput } = await import('./utils/is-full-solc-output');
+  if (isFullSolcOutput(output)) {
+    const decodeSrc = solcInputOutputDecoder(args.input, output);
+    const validations = validate(output, decodeSrc);
+    await writeValidations(hre, validations);
+  }
 
-
+  return { output, solcBuild };
+});
 
 extendEnvironment(hre => {
   hre.upgrades = lazyObject(
@@ -85,10 +78,6 @@ extendEnvironment(hre => {
         makeChangeProxyAdmin,
         makeTransferProxyAdminOwnership,
       } = require('./plugin/wrappers');
-      // const { makeDeployProxy } = require('./deploy-proxy');
-      // const { makeUpgradeProxy } = require('./upgrade-proxy');
-      // const { makePrepareUpgrade } = require('./prepare-upgrade');
-      // const { makeChangeProxyAdmin, makeTransferProxyAdminOwnership, makeGetInstanceFunction } = require('./admin');
 
       return {
         silenceWarnings,

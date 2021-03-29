@@ -2,7 +2,7 @@ import { HardhatRuntimeEnvironment  } from 'hardhat/types';
 import { Signer                     } from '@ethersproject/abstract-signer';
 import { ContractFactory            } from '@ethersproject/contracts';
 import { Contract                   } from '@ethersproject/contracts';
-import { Options as OptionsTemplate } from '../common';
+import { Options as OptionsTemplate } from '@openzeppelin/plugin-common';
 
 export type E       = HardhatRuntimeEnvironment;
 export type D       = Signer;

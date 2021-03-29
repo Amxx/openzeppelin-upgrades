@@ -26,15 +26,16 @@ export function withDeployDefaults<E,D,F,I>(
   env: E
 ): Required<DeployOptions<E,D,F,I>>
 {
-  const deployer:    D                = opts?.deployer                    ?? plugin.getDeployer(env);
-  const provider:    Provider         = opts?.network?.provider           ?? plugin.getProvider(env);
-  const kind:        ProxyKind        = opts?.kind                        ?? 'auto';
-  const initializer: ProxyInitializer = opts?.implementation?.initializer ?? 'initialize';
-  const constructor: unknown[]        = opts?.implementation?.constructor ?? [];
+  const deployer:    D                = opts?.deployer          ?? plugin.getDeployer(env);
+  const provider:    Provider         = opts?.network?.provider ?? plugin.getProvider(env);
+  const kind:        ProxyKind        = opts?.kind              ?? 'auto';
+  const initializer: ProxyInitializer = opts?.initializer       ?? 'initialize';
+  const implArgs:    unknown[]        = opts?.implArgs          ?? [];
   return {
     deployer,
     network: { provider },
     kind,
-    implementation: { initializer, constructor },
+    initializer,
+    implArgs,
   };
 }

@@ -18,7 +18,7 @@ import {
   transferProxyAdminOwnership,
   getInstance,
   withDefaults,
-} from '../common';
+} from '@openzeppelin/plugin-common';
 
 export function makeDeployProxy(env: E): DeployProxyFunction {
   return (

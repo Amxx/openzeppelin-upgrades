@@ -7,9 +7,23 @@ import {
   Plugin,
   Artefact,
   GetFactory,
-  AttachContract,
   DeployContract,
-} from '../common';
+  AttachContract,
+  EncodeCall,
+  ReadValidation,
+  GetContractVersion,
+} from '@openzeppelin/plugin-common';
+
+import {
+  getVersion,
+  getUnlinkedBytecode,
+  ValidationDataCurrent,
+  Version,
+} from '@openzeppelin/upgrades-core';
+
+import {
+  readValidations
+} from '../utils/validations';
 
 function makeFactoryGetter(artifact: Artefact): GetFactory<E,D,F,I> {
   return function (env: E, deployer?: D): Promise<F> {
@@ -17,11 +31,6 @@ function makeFactoryGetter(artifact: Artefact): GetFactory<E,D,F,I> {
     return env.ethers.getContractFactory(artifact.abi, artifact.bytecode, deployer);
   }
 }
-
-const attachContract: AttachContract<E,D,F,I> =
-  function(factory: F, address: string): I {
-    return factory.attach(address);
-  };
 
 const deployContract: DeployContract<E,D,F,I> =
   async function(deployer: D, factory: F, ...args: unknown[]): Promise<I> {
@@ -32,12 +41,32 @@ const deployContract: DeployContract<E,D,F,I> =
     return contract;
   };
 
+const attachContract: AttachContract<E,D,F,I> =
+  function(factory: F, address: string): I {
+    return factory.attach(address);
+  };
+
+const encodeCall: EncodeCall<E,D,F,I> =
+  function(factory: F, signature: string, ...args: unknown[]): string {
+    const fragment = factory.interface.getFunction(signature);
+    return factory.interface.encodeFunctionData(fragment, args as any[]);
+  }
+
+const getContractVersion: GetContractVersion<E,D,F,I> =
+  async function (env: E, validations: ValidationDataCurrent, factory: F): Promise<Version> {
+    const unlinkedBytecode = getUnlinkedBytecode(validations, factory.bytecode);
+    return getVersion(unlinkedBytecode, factory.bytecode);
+  }
+
 export const plugin: Plugin<E,D,F,I> = {
   getProvider:                           (env: E) => env.network.provider,
   getDeployer:                           (env: E) => { throw new Error('Cannot extract default deployer from E') },
   getProxyFactory:                       makeFactoryGetter(ERC1967Proxy),
   getTransparentUpgradeableProxyFactory: makeFactoryGetter(TransparentUpgradeableProxy),
   getProxyAdminFactory:                  makeFactoryGetter(ProxyAdmin),
-  attachContract,
   deployContract,
+  attachContract,
+  encodeCall,
+  readValidations,
+  getContractVersion,
 };

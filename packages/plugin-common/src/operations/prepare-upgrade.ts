@@ -1,4 +1,4 @@
-import { Manifest, getAdminAddress } from '@openzeppelin/upgrades-core';
+import { Manifest } from '@openzeppelin/upgrades-core';
 
 import {
   Plugin,
@@ -20,10 +20,18 @@ export async function prepareUpgrade<E,D,F,I extends { address: string }>(
   const manifest = await Manifest.forNetwork(provider);
 
   // Autodetect proxy type
-  const adminAddress = await getAdminAddress(provider, proxyAddress);
   if (opts.kind === 'auto') {
-    opts.kind = adminAddress === '0x0000000000000000000000000000000000000000' ? 'uups' : 'transparent';
+    try {
+      const { kind } = await manifest.getProxyFromAddress(proxyAddress);
+      opts.kind = kind;
+    } catch (e) {
+      if (e instanceof Error) {
+        opts.kind = 'transparent';
+      } else {
+        throw e;
+      }
+    }
   }
 
-  return await deployImpl(plugin, env, factory, opts); // TODO: check { proxyAddress, manifest }
+  return await deployImpl(plugin, env, factory, opts, { proxyAddress, manifest });
 }
