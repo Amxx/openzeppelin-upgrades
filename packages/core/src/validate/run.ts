@@ -209,12 +209,13 @@ function* getOpcodeErrors(contractDef: ContractDefinition, decodeSrc: SrcDecoder
       };
     }
   }
-  for (const node of findAll('InlineAssembly', contractDef, node => skipCheck('inline-assembly', node))) {
-    yield {
-      kind: 'inline-assembly',
-      src: decodeSrc(node),
-    };
-  }
+  // disabled for now
+  // for (const node of findAll('InlineAssembly', contractDef, node => skipCheck('inline-assembly', node))) {
+  //   yield {
+  //     kind: 'inline-assembly',
+  //     src: decodeSrc(node),
+  //   };
+  // }
 }
 
 function* getStateVariableErrors(

@@ -3,7 +3,7 @@ import crypto from 'crypto';
 
 import { EthereumProvider } from '@openzeppelin/upgrades-core';
 
-import { TruffleProvider } from '../specialize/truffle';
+import { TruffleProvider } from './truffle';
 
 export function wrapProvider(provider: TruffleProvider): EthereumProvider {
   const web3Send = promisify(provider.send.bind(provider));

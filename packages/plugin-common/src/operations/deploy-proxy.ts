@@ -34,30 +34,39 @@ export async function deployProxy<E,D,F,I extends { address: string, txHash?: st
   switch (opts.kind) {
     case 'uups': {
       const ProxyFactory = await plugin.getProxyFactory(env);
-      proxyAddress = await fetchOrDeployProxy(provider, 'uups', () => plugin.deployContract(
-        opts.deployer,
-        ProxyFactory,
-        impl,
-        data,
-      ));
+      proxyAddress = await fetchOrDeployProxy(provider, 'uups', async () => {
+        const { address, txHash } = await plugin.deployContract(
+          opts.deployer,
+          ProxyFactory,
+          impl,
+          data,
+        );
+        return { address, txHash };
+      });
       break;
     }
 
     case 'auto':
     case 'transparent': {
       const AdminFactory = await plugin.getProxyAdminFactory(env);
-      const adminAddress = await fetchOrDeployAdmin(provider, () => plugin.deployContract(
-        opts.deployer,
-        AdminFactory,
-      ));
+      const adminAddress = await fetchOrDeployAdmin(provider, async () => {
+        const { address, txHash } = await plugin.deployContract(
+          opts.deployer,
+          AdminFactory,
+        );
+        return { address, txHash };
+      });
       const TransparentUpgradeableProxyFactory = await plugin.getTransparentUpgradeableProxyFactory(env);
-      proxyAddress = await fetchOrDeployProxy(provider, 'transparent', () => plugin.deployContract(
-        opts.deployer,
-        TransparentUpgradeableProxyFactory,
-        impl,
-        adminAddress,
-        data,
-      ));
+      proxyAddress = await fetchOrDeployProxy(provider, 'transparent', async () => {
+        const { address, txHash } = await plugin.deployContract(
+          opts.deployer,
+          TransparentUpgradeableProxyFactory,
+          impl,
+          adminAddress,
+          data,
+        );
+        return { address, txHash };
+      });
       break;
     }
   }
@@ -66,8 +75,8 @@ export async function deployProxy<E,D,F,I extends { address: string, txHash?: st
 
   return {
     ...plugin.attachContract(factory, proxyAddress),
-    // deployTransaction
     txHash,
+    transactionHash: txHash,
   };
 }
 
