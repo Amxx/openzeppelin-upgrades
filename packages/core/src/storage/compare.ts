@@ -5,6 +5,7 @@ import { StructMember as _StructMember, isEnumMembers, isStructMembers } from '.
 import { LayoutCompatibilityReport } from './report';
 import { assert } from '../utils/assert';
 import { isValueType } from '../utils/is-value-type';
+import { type } from 'os';
 
 export type StorageItem = _StorageItem<ParsedTypeDetailed>;
 type StructMember = _StructMember<ParsedTypeDetailed>;
@@ -51,6 +52,44 @@ export type TypeChange = (
   updated: ParsedTypeDetailed;
 };
 
+function flattedFields(input: StorageField): StorageField[] {
+  switch (input.type.head) {
+    case 't_struct':
+      return ((input.type.item.members ?? []) as StructMember[])
+        .map(entry => flattedFields(entry))
+        .reduce((acc, entries) => acc.concat(entries), [])
+        .map(entry => ({
+          ...input,
+          ...entry,
+          label: [ input.label, entry.label ].join(':'),
+        }));
+
+    case 't_mapping':
+      //TODO
+      return [input];
+
+    default:
+      return [ input ];
+  }
+}
+
+function flattedItem(input: StorageItem[]): StorageItem[] {
+  return input.map((slot: StorageItem) : StorageItem[] => {
+    switch (slot.type.head) {
+      case 't_struct':
+        return flattedFields(slot).map(entry => ({ ...slot, ...entry }));
+
+      case 't_mapping':
+        //TODO
+       return [ slot ];
+
+      default:
+        return [slot];
+    }
+  })
+  .reduce((acc, entries) => acc.concat(entries), []);
+}
+
 export class StorageLayoutComparator {
   hasAllowedUncheckedCustomTypes = false;
 
@@ -58,10 +97,14 @@ export class StorageLayoutComparator {
   stack = new Set<string>();
   cache = new Map<string, TypeChange | undefined>();
 
-  constructor(readonly unsafeAllowCustomTypes = false, readonly unsafeAllowRenames = false) {}
+  constructor(readonly unsafeAllowCustomTypes = false, readonly unsafeAllowRenames = false, readonly unsafeAllowPacking = false) {}
 
   compareLayouts(original: StorageItem[], updated: StorageItem[]): LayoutCompatibilityReport {
-    return new LayoutCompatibilityReport(this.layoutLevenshtein(original, updated, { allowAppend: true }));
+    return new LayoutCompatibilityReport(this.layoutLevenshtein(
+      this.unsafeAllowPacking ? flattedItem(original) : original,
+      this.unsafeAllowPacking ? flattedItem(updated)  : updated,
+      { allowAppend: true  },
+    ));
   }
 
   private layoutLevenshtein<F extends StorageField>(

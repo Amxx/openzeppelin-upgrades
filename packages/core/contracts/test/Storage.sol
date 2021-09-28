@@ -386,9 +386,9 @@ contract StorageUpgrade_MappingEnumKey_V2_Bad {
 }
 
 contract StorageUpgrade_unpacked {
-    string a;
+    uint256 a;
     mapping (address => uint256) b;
-    uint256 c;
+    string c;
 }
 
 contract StorageUpgrade_semipacked {
@@ -396,15 +396,21 @@ contract StorageUpgrade_semipacked {
         mapping (address => uint256) b;
     }
     uint256 a;
-    Packed data;
-    uint256 c;
+    Packed packed;
+    string c;
 }
 
 contract StorageUpgrade_packed {
-    struct Packed {
+    struct Level0 {
         uint256 a;
-        mapping (address => uint256) b;
-        uint256 c;
     }
-    Packed data;
+    struct Level1 {
+        Level0 data0;
+        mapping (address => Level0) b;
+    }
+    struct Level2 {
+        Level1  data1;
+        string c;
+    }
+    Level2 data2;
 }

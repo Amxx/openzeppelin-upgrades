@@ -31,7 +31,7 @@ export function assertStorageUpgradeSafe(
 
   const originalDetailed = getDetailedLayout(original);
   const updatedDetailed = getDetailedLayout(updated);
-  const comparator = new StorageLayoutComparator(opts.unsafeAllowCustomTypes, opts.unsafeAllowRenames);
+  const comparator = new StorageLayoutComparator(opts.unsafeAllowCustomTypes, opts.unsafeAllowRenames, opts.unsafeAllowPacking);
   const report = comparator.compareLayouts(originalDetailed, updatedDetailed);
 
   if (comparator.hasAllowedUncheckedCustomTypes) {
