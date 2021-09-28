@@ -9,6 +9,7 @@ import { getStorageUpgradeErrors } from './storage';
 import { StorageLayout, isEnumMembers } from './storage/layout';
 import { extractStorageLayout } from './storage/extract';
 import { stabilizeTypeIdentifier } from './utils/type-id';
+import { version } from 'process';
 
 interface Context {
   extractStorageLayout: (contract: string) => ReturnType<typeof extractStorageLayout>;
@@ -477,3 +478,16 @@ function stabilizeStorageLayout(layout: StorageLayout) {
     }),
   };
 }
+
+test('storage upgrade packing/unpacking', t => {
+  const versions = [
+    t.context.extractStorageLayout('StorageUpgrade_unpacked'),
+    t.context.extractStorageLayout('StorageUpgrade_semipacked'),
+    t.context.extractStorageLayout('StorageUpgrade_packed'),
+  ];
+
+  versions.forEach((x, i) => versions.slice(i + 1).map(y => {
+    t.deepEqual(getStorageUpgradeErrors(x, y).filter(error => error.kind !== 'rename'), []);
+    t.deepEqual(getStorageUpgradeErrors(y, x).filter(error => error.kind !== 'rename'), []);
+  }));
+});
